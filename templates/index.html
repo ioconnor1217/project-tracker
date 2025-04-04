@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Tracker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
 </head>
 <body>
     <h1>Project Tracker</h1>
-    <button onclick="showAlert()">Log Project Hours</button>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <a href="{{ url_for('login') }}">Login</a>
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
 </body>
 </html>

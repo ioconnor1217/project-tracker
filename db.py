@@ -9,7 +9,7 @@ class Database:
         """
         try:
             conn = pyodbc.connect(
-                server="IANS-LAPTOP",
+                server="192.168.8.214", #IANS-LAPTOP
                 database="ProjectTracker",
                 user="sa",
                 password="121792",

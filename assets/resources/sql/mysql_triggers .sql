@@ -1,0 +1,67 @@
+USE ProjectTracker;
+
+-- Client Trigger
+DELIMITER $$
+CREATE TRIGGER trg_Update_Client
+BEFORE UPDATE ON Client
+FOR EACH ROW
+BEGIN
+    SET NEW.UpdatedBy = CURRENT_USER();
+    SET NEW.UpdatedDate = CURRENT_TIMESTAMP;
+END$$
+DELIMITER ;
+
+-- Project Trigger
+DELIMITER $$
+CREATE TRIGGER trg_Update_Project
+BEFORE UPDATE ON Project
+FOR EACH ROW
+BEGIN
+    SET NEW.UpdatedBy = CURRENT_USER();
+    SET NEW.UpdatedDate = CURRENT_TIMESTAMP;
+END$$
+DELIMITER ;
+
+-- Login Trigger
+DELIMITER $$
+CREATE TRIGGER trg_Update_Login
+BEFORE UPDATE ON Login
+FOR EACH ROW
+BEGIN
+    SET NEW.UpdatedBy = CURRENT_USER();
+    SET NEW.UpdatedDate = CURRENT_TIMESTAMP;
+END$$
+DELIMITER ;
+
+-- Consultant Trigger
+DELIMITER $$
+CREATE TRIGGER trg_Update_Consultant
+BEFORE UPDATE ON Consultant
+FOR EACH ROW
+BEGIN
+    SET NEW.UpdatedBy = CURRENT_USER();
+    SET NEW.UpdatedDate = CURRENT_TIMESTAMP;
+END$$
+DELIMITER ;
+
+-- ProjectConsultant Trigger
+DELIMITER $$
+CREATE TRIGGER trg_Update_ProjectConsultant
+BEFORE UPDATE ON ProjectConsultant
+FOR EACH ROW
+BEGIN
+    SET NEW.UpdatedBy = CURRENT_USER();
+    SET NEW.UpdatedDate = CURRENT_TIMESTAMP;
+END$$
+DELIMITER ;
+
+-- ProjectDetail Trigger
+DELIMITER $$
+CREATE TRIGGER trg_Update_ProjectDetail
+BEFORE UPDATE ON ProjectDetail
+FOR EACH ROW
+BEGIN
+    SET NEW.UpdatedBy = CURRENT_USER();
+    SET NEW.UpdatedDate = CURRENT_TIMESTAMP;
+END$$
+DELIMITER ;

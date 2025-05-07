@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='auth.js') }}"></script>
+</head>
+<body class="login-page">
+  <h2 class="login-header">Login</h2>
+  <div class="container">
+    <form id="login-form" class="login-form">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required />
+      
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required />
+      
+      <button type="submit">Log In</button>
+    </form>
+    <div id="msg" class="error"></div>
+  </div>
+</body>
+</html>

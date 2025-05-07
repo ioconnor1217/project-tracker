@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="static/style.css" />
+  <script defer src="static/auth.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <div class="sidebar" id="sidebar">
+      <nav>
+        <ul>
+          <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+          <li><a href="{{ url_for('log_hours') }}">Log Hours</a></li>
+          <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+      </nav>
+    </div>
+    <main>
+    <h2>Log Hours Here</h2>
+  </main>
+</body>
+</html>

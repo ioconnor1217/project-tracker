@@ -13,6 +13,20 @@ class Database:
                 driver="{ODBC Driver 18 for SQL Server}"
             )
             return conn
+            """
+            conn = pyodbc.connect(
+                server="tcp:project-tracker-server.database.windows.net,1433",
+                database="project-tracker-db",
+                user="ianoconnor1217",
+                password="121792",
+                encrypt="Yes",
+                trustservercertificate="No",
+                connection_timeout="30",
+                driver="{ODBC Driver 18 for SQL Server}"
+            )
+
+            return conn
+            """
         except Exception as e:
             print("Database connection error:", e)
             return None

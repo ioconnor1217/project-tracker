@@ -62,6 +62,10 @@ def logout():
 def favicon():
     return "", 204 
 
+@app.route('/health')
+def health():
+    return 'OK', 200
+
 @app.route("/hours")
 def log_hours():
     if "user" not in session:
@@ -82,5 +86,7 @@ def api_validate_login():
     else:
         return {"success": False, "errorMessage": "Invalid username or password."}, 400
 
+"""
 if __name__ == "__main__":
     app.run(debug=True)
+"""

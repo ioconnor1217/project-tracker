@@ -1,32 +1,40 @@
 import pyodbc
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+print("IS_AZURE value:", os.getenv("IS_AZURE"))
 
 class Database:
     @staticmethod
     def connect():
-        try:
-            conn = pyodbc.connect(
-                server="localhost",
-                database="ProjectTracker",
-                user="sa",
-                password="121792",
-                trustservercertificate="Yes",
-                driver="{ODBC Driver 18 for SQL Server}"
-            )
-            return conn
-            """
-            conn = pyodbc.connect(
-                server="tcp:project-tracker-server.database.windows.net,1433",
-                database="project-tracker-db",
-                user="ianoconnor1217",
-                password="121792",
-                encrypt="Yes",
-                trustservercertificate="No",
-                connection_timeout="30",
-                driver="{ODBC Driver 18 for SQL Server}"
-            )
+        is_azure = os.getenv("IS_AZURE", "False") == "True"
 
+        try:
+            if is_azure:
+                # Use Azure Database
+                conn = pyodbc.connect(
+                    server="tcp:project-tracker-server.database.windows.net,1433",
+                    database="project-tracker-db",
+                    user="ianoconnor1217",
+                    password="121792",
+                    encrypt="Yes",
+                    trustservercertificate="No",
+                    connection_timeout="30",
+                    driver="{ODBC Driver 18 for SQL Server}"
+                )
+            else:
+                # Use Local Database
+                conn = pyodbc.connect(
+                    server="localhost",
+                    database="ProjectTracker",
+                    user="sa",
+                    password="121792",
+                    trustservercertificate="Yes",
+                    driver="{ODBC Driver 18 for SQL Server}"
+                )
+            
             return conn
-            """
         except Exception as e:
             print("Database connection error:", e)
             return None

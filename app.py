@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from consultant import Consultant
 from db import Database
@@ -15,14 +16,21 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
+        print(f"Attempting login for {username}")
+
         user = Consultant.search_username(username)
-        if user and password == user["Password"].strip():
-            session["user"] = user["Username"]
-            flash("Login successful!", "success")
-            return redirect(url_for("dashboard"))
+        if user:
+            print(f"User found: {user}")
+            if password == user["Password"].strip():
+                session["user"] = user["Username"]
+                flash("Login successful!", "success")
+                return redirect(url_for("dashboard"))
+            else:
+                print(f"Password mismatch for {username}")
+        else:
+            print(f"No user found for {username}")
 
         flash("Invalid username or password.", "danger")
-
     return render_template("login.html")
 
 @app.route("/api/login", methods=["POST"])
@@ -76,7 +84,7 @@ def log_hours():
 @app.route("/api/validate-login", methods=["POST"])
 def api_validate_login():
     data = request.get_json()
-    print("Received data:", data)  # Debugging line
+    print("Received data:", data)
     username = data.get("username")
     password = data.get("password")
 
@@ -86,7 +94,6 @@ def api_validate_login():
     else:
         return {"success": False, "errorMessage": "Invalid username or password."}, 400
 
-"""
 if __name__ == "__main__":
-    app.run(debug=True)
-"""
+    if os.environ.get("IS_AZURE") is None:
+        app.run(debug=True)

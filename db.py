@@ -17,7 +17,7 @@ class Database:
                     server="tcp:project-tracker-server.database.windows.net,1433",
                     database="project-tracker-db",
                     user="ianoconnor1217",
-                    password="121792",
+                    password="Neverdie100",
                     encrypt="Yes",
                     trustservercertificate="No",
                     connection_timeout="30",

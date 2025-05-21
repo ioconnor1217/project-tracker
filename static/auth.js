@@ -1,18 +1,21 @@
+// Get references to important DOM elements
 const loginForm = document.getElementById('login-form');
 const logoutLink = document.getElementById('logout');
 const msgBox = document.getElementById('msg');
 const usernameSpan = document.getElementById('username');
 
-// Simulate session timeout (5 minutes = 300000 ms)
+// Set session timeout to 5min
 const TIMEOUT_MS = 300000;
-let timeout;
+let timeout;  // Will hold the setInterval reference for session enforcement
 
+// Log the user in
 function loginUser(username) {
   sessionStorage.setItem('user', username);
   sessionStorage.setItem('lastActivity', Date.now());
-  window.location.href = '/dashboard';
+  window.location.href = '/dashboard';  // Redirect to dashboard after login
 }
 
+// Log the user out
 function logoutUser(e) {
   if (e) e.preventDefault();
   sessionStorage.removeItem('user');
@@ -20,6 +23,7 @@ function logoutUser(e) {
   window.location.href = '/';
 }
 
+// Collect and submit entered hours
 async function submitHours() {
   const table = document.getElementById('hours-table').getElementsByTagName('tbody')[0];
   const rows = Array.from(table.rows);
@@ -32,8 +36,10 @@ async function submitHours() {
     const description = row.querySelector('.desc-input').value.trim();
     const hours = parseFloat(row.querySelector('.hours-input').value);
 
+    // Skip rows that aren't fully filled
     if (!project_id || !client_id || !date || !description || isNaN(hours)) continue;
 
+    // Add valid row to submission data
     data.push({
       project_id: parseInt(project_id),
       client_id: parseInt(client_id),
@@ -48,6 +54,7 @@ async function submitHours() {
     return;
   }
 
+  // Submit hours to backend
   try {
     const response = await fetch('/submit_hours', {
       method: 'POST',
@@ -69,6 +76,7 @@ async function submitHours() {
   }
 }
 
+// Populate project and client dropdowns
 async function populateDropdowns() {
   const projectSelects = document.querySelectorAll('.project-select');
   const clientSelects = document.querySelectorAll('.client-select');
@@ -84,6 +92,7 @@ async function populateDropdowns() {
   const projectOptions = projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
   const clientOptions = clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
+  // Inject the options into all project dropdowns
   projectSelects.forEach(select => {
     select.innerHTML = `
       <option value="">-- Select or Add Project --</option>
@@ -92,6 +101,7 @@ async function populateDropdowns() {
     `;
   });
 
+  // Inject the options into all client dropdowns
   clientSelects.forEach(select => {
     select.innerHTML = `
       <option value="">-- Select or Add Client --</option>
@@ -101,42 +111,53 @@ async function populateDropdowns() {
   });
 }
 
+// Check if the session has expired
 function enforceSession() {
   const lastActivity = parseInt(sessionStorage.getItem('lastActivity'), 10);
   const now = Date.now();
+
   if (isNaN(lastActivity) || now - lastActivity > TIMEOUT_MS) {
     alert('Session expired. Please log in again.');
     logoutUser();
   } else {
+    // Update activity timestamp
     sessionStorage.setItem('lastActivity', now);
   }
 }
 
+// Enforce login and setup session/session timeout
 function initPage() {
   const user = sessionStorage.getItem('user');
   const currentPath = window.location.pathname;
 
+  // Redirect to login if not logged in
   if (!user && currentPath !== '/' && currentPath !== '/login') {
     window.location.href = '/';
   } else if (user) {
+    // Show username on screen
     if (usernameSpan) usernameSpan.textContent = user;
+
+    // Attach logout behavior
     if (logoutLink) logoutLink.addEventListener('click', logoutUser);
+
+    // Enforce session timeout
     enforceSession();
     timeout = setInterval(enforceSession, 60000);
 
-    // ✅ Moved inside initPage to ensure DOM is ready
+    // Populate dropdowns
     if (currentPath === '/hours') {
       populateDropdowns();
     }
   }
 }
 
+// Ensure usernames are valid
 function validateUsername(username) {
   const usernamePattern = /^[a-zA-Z0-9_]{3,20}$/;
   return usernamePattern.test(username);
 }
 
-// Temporarily commented out password validation
+// Optional strong password validation
 /*
 function validatePassword(password) {
   const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
@@ -144,8 +165,10 @@ function validatePassword(password) {
 }
 */
 
+// Handle login form submission
 function submitLogin(e) {
   e.preventDefault();
+
   const username = loginForm.username.value.trim();
   const password = loginForm.password.value.trim();
 
@@ -165,6 +188,7 @@ function submitLogin(e) {
   if (!validateUsername(username)) {
     msgBox.textContent = 'Invalid username.';
   } else {
+    // Send login request to backend
     fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -186,9 +210,10 @@ function submitLogin(e) {
   }
 }
 
-// ✅ DOM is fully ready before initPage is called
+// Initialize page logic once the DOM is fully loaded
 window.addEventListener('DOMContentLoaded', initPage);
 
+// Handle dynamic creation of new projects and clients
 document.addEventListener('change', async (e) => {
   if (e.target.classList.contains('project-select') && e.target.value === '__new__') {
     const newProject = prompt("Enter new project name:");
@@ -204,6 +229,7 @@ document.addEventListener('change', async (e) => {
     }
   }
 
+  // Handle new client creation
   if (e.target.classList.contains('client-select') && e.target.value === '__new__') {
     const newClient = prompt("Enter new client name:");
     if (!newClient) return;
@@ -219,6 +245,7 @@ document.addEventListener('change', async (e) => {
   }
 });
 
+// Check if the given name already exists
 async function checkDuplicate(url, name) {
   const res = await fetch(url, {
     method: 'POST',
@@ -229,6 +256,7 @@ async function checkDuplicate(url, name) {
   return result.exists;
 }
 
+// Create a new item (project or client)
 async function createNewItem(url, name) {
   const res = await fetch(url, {
     method: 'POST',
@@ -239,7 +267,7 @@ async function createNewItem(url, name) {
   return result.id;
 }
 
-// Attach login event if login form exists
+// Attach login form event handler
 if (loginForm) {
   loginForm.addEventListener('submit', submitLogin);
 }

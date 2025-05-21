@@ -11,35 +11,32 @@ class Database:
 
     @staticmethod
     def connect():
-        # Check if we are connecting to Azure or local SQL Server
         is_azure = os.getenv("IS_AZURE", "False") == "True"
 
         try:
             if is_azure:
-                # Connect to Azure SQL database
-                conn = pyodbc.connect(
-                    server=os.getenv("AZURE_DB_SERVER"),
-                    database=os.getenv("AZURE_DB_NAME"),
-                    user=os.getenv("AZURE_DB_USER"),
-                    password=os.getenv("AZURE_DB_PASSWORD"),
-                    encrypt="Yes",
-                    trustservercertificate="No",
-                    connection_timeout="30",
-                    driver="{ODBC Driver 18 for SQL Server}"
+                conn_str = (
+                    f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+                    f"SERVER={os.getenv('AZURE_DB_SERVER')};"
+                    f"DATABASE={os.getenv('AZURE_DB_NAME')};"
+                    f"UID={os.getenv('AZURE_DB_USER')};"
+                    f"PWD={os.getenv('AZURE_DB_PASSWORD')};"
+                    f"Encrypt=yes;"
+                    f"TrustServerCertificate=no;"
+                    f"Connection Timeout=30;"
                 )
             else:
-                # Connect to local SQL Server database
-                conn = pyodbc.connect(
-                    server=os.getenv("LOCAL_DB_SERVER"),
-                    database=os.getenv("LOCAL_DB_NAME"),
-                    user=os.getenv("LOCAL_DB_USER"),
-                    password=os.getenv("LOCAL_DB_PASSWORD"),
-                    trustservercertificate="Yes",
-                    driver="{ODBC Driver 18 for SQL Server}"
+                conn_str = (
+                    f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+                    f"SERVER={os.getenv('LOCAL_DB_SERVER')};"
+                    f"DATABASE={os.getenv('LOCAL_DB_NAME')};"
+                    f"UID={os.getenv('LOCAL_DB_USER')};"
+                    f"PWD={os.getenv('LOCAL_DB_PASSWORD')};"
+                    f"TrustServerCertificate=yes;"
                 )
+            conn = pyodbc.connect(conn_str)
             return conn
         except Exception as e:
-            # Print any connection error
             print("Database connection error:", e)
             return None
 

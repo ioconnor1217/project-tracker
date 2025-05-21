@@ -19,6 +19,42 @@
     </div>
     <main>
     <h2>Log Hours Here</h2>
+    <table id="hours-table">
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Client</th>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Hours</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <select class="project-select" required>
+              <option value="" disabled selected>-- Select Project --</option>
+            </select>
+          </td>
+          <td>
+            <select class="client-select" required>
+              <option value="" disabled selected>-- Select Client --</option>
+            </select>
+          </td>
+          <td>
+            <input type="date" class="date-input" required>
+          </td>
+          <td>
+            <input type="text" class="desc-input" placeholder="Work description" required>
+          </td>
+          <td>
+            <input type="number" class="hours-input" min="0" step="0.25" required>
+          </td>
+        </tr>
+        <!-- Additional rows can be added dynamically -->
+      </tbody>
+    </table>
+    <button onclick="submitHours()">Submit Hours</button>
   </main>
 </body>
 </html>

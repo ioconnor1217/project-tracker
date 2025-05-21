@@ -14,10 +14,91 @@ function loginUser(username) {
 }
 
 function logoutUser(e) {
-  if (e) e.preventDefault(); // prevent default link behavior
+  if (e) e.preventDefault();
   sessionStorage.removeItem('user');
   sessionStorage.removeItem('lastActivity');
   window.location.href = '/';
+}
+
+async function submitHours() {
+  const table = document.getElementById('hours-table').getElementsByTagName('tbody')[0];
+  const rows = Array.from(table.rows);
+  const data = [];
+
+  for (const row of rows) {
+    const project_id = row.querySelector('.project-select').value;
+    const client_id = row.querySelector('.client-select').value;
+    const date = row.querySelector('.date-input').value;
+    const description = row.querySelector('.desc-input').value.trim();
+    const hours = parseFloat(row.querySelector('.hours-input').value);
+
+    if (!project_id || !client_id || !date || !description || isNaN(hours)) continue;
+
+    data.push({
+      project_id: parseInt(project_id),
+      client_id: parseInt(client_id),
+      date,
+      description,
+      hours
+    });
+  }
+
+  if (data.length === 0) {
+    alert('Please fill in at least one complete row before submitting.');
+    return;
+  }
+
+  try {
+    const response = await fetch('/submit_hours', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+    if (result.status === 'success') {
+      alert('Hours submitted successfully!');
+    } else {
+      alert('Submission failed.');
+    }
+  } catch (error) {
+    console.error('Error submitting hours:', error);
+    alert('An error occurred while submitting hours.');
+  }
+}
+
+async function populateDropdowns() {
+  const projectSelects = document.querySelectorAll('.project-select');
+  const clientSelects = document.querySelectorAll('.client-select');
+
+  const [projectsRes, clientsRes] = await Promise.all([
+    fetch('/api/projects'),
+    fetch('/api/clients')
+  ]);
+
+  const projects = await projectsRes.json();
+  const clients = await clientsRes.json();
+
+  const projectOptions = projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  const clientOptions = clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+  projectSelects.forEach(select => {
+    select.innerHTML = `
+      <option value="">-- Select or Add Project --</option>
+      ${projectOptions}
+      <option value="__new__">+ Add New Project</option>
+    `;
+  });
+
+  clientSelects.forEach(select => {
+    select.innerHTML = `
+      <option value="">-- Select or Add Client --</option>
+      ${clientOptions}
+      <option value="__new__">+ Add New Client</option>
+    `;
+  });
 }
 
 function enforceSession() {
@@ -42,6 +123,11 @@ function initPage() {
     if (logoutLink) logoutLink.addEventListener('click', logoutUser);
     enforceSession();
     timeout = setInterval(enforceSession, 60000);
+
+    // ✅ Moved inside initPage to ensure DOM is ready
+    if (currentPath === '/hours') {
+      populateDropdowns();
+    }
   }
 }
 
@@ -76,18 +162,9 @@ function submitLogin(e) {
     return;
   }
 
-  // Validate username and password (password validation commented out for now)
   if (!validateUsername(username)) {
     msgBox.textContent = 'Invalid username.';
-  } 
-  // Temporarily bypassing password validation
-  /*
-  else if (!validatePassword(password)) {
-    msgBox.textContent = 'Password must be at least 8 chars, one upper, one lower, one digit, one special.';
-  }
-  */
-  else {
-    // Send login data to the server for further validation
+  } else {
     fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -109,10 +186,60 @@ function submitLogin(e) {
   }
 }
 
-// --- Initialize page (protect routes) ---
+// ✅ DOM is fully ready before initPage is called
 window.addEventListener('DOMContentLoaded', initPage);
 
-// Handle form submission
+document.addEventListener('change', async (e) => {
+  if (e.target.classList.contains('project-select') && e.target.value === '__new__') {
+    const newProject = prompt("Enter new project name:");
+    if (!newProject) return;
+
+    const exists = await checkDuplicate('/api/check_project', newProject);
+    if (exists) return alert("Project already exists.");
+
+    const id = await createNewItem('/api/create_project', newProject);
+    if (id) {
+      await populateDropdowns();
+      e.target.value = id;
+    }
+  }
+
+  if (e.target.classList.contains('client-select') && e.target.value === '__new__') {
+    const newClient = prompt("Enter new client name:");
+    if (!newClient) return;
+
+    const exists = await checkDuplicate('/api/check_client', newClient);
+    if (exists) return alert("Client already exists.");
+
+    const id = await createNewItem('/api/create_client', newClient);
+    if (id) {
+      await populateDropdowns();
+      e.target.value = id;
+    }
+  }
+});
+
+async function checkDuplicate(url, name) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name })
+  });
+  const result = await res.json();
+  return result.exists;
+}
+
+async function createNewItem(url, name) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name })
+  });
+  const result = await res.json();
+  return result.id;
+}
+
+// Attach login event if login form exists
 if (loginForm) {
   loginForm.addEventListener('submit', submitLogin);
 }

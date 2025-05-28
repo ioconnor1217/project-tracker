@@ -1,4 +1,4 @@
-USE [ProjectTracker]
+USE [project-tracker-db]
 GO
 
 INSERT INTO [dbo].[Client]
@@ -37,10 +37,10 @@ VALUES
     (3, 2, 180.00);  -- Raekwon assigned to Risk Assessment
 GO
 
-INSERT INTO [dbo].[ProjectDetail] ([ProjectConsultantID], [ClientID], [WorkDate], [WorkDescription], [WorkedHours])
+INSERT INTO [dbo].[ProjectDetail] ([ProjectConsultantID], [WorkDate], [WorkDescription], [WorkedHours])
 VALUES 
-    (1, 1, '2025-03-15', 'Developed financial restructuring strategy', 5.5),
-    (2, 1, '2025-03-16', 'Analyzed corporate risk factors', 4.0),
-    (3, 1, '2025-03-17', 'Reviewed investment portfolio', 6.0),
-    (4, 1, '2025-03-18', 'Identified key risk areas in market trends', 3.5);
+    (1, '2025-03-15', 'Developed financial restructuring strategy', 5.5),
+    (2, '2025-03-16', 'Analyzed corporate risk factors', 4.0),
+    (3, '2025-03-17', 'Reviewed investment portfolio', 6.0),
+    (4, '2025-03-18', 'Identified key risk areas in market trends', 3.5);
 GO

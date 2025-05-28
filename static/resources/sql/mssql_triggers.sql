@@ -1,4 +1,4 @@
-USE [ProjectTracker]
+USE [project-tracker-db]
 GO
 
 CREATE TRIGGER trg_Update_Client
@@ -44,9 +44,6 @@ BEGIN
     FROM [dbo].[Login] l
     INNER JOIN inserted i ON i.LoginID = l.LoginID;
 END;
-GO
-
-USE [ProjectTracker]
 GO
 
 CREATE TRIGGER trg_Update_Consultant

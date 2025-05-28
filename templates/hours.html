@@ -13,6 +13,7 @@
         <ul>
           <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
           <li><a href="{{ url_for('log_hours') }}">Log Hours</a></li>
+          <li><a href="{{ url_for('view_hours') }}">View Hours</a></li>
           <li><a href="{{ url_for('logout') }}">Logout</a></li>
         </ul>
       </nav>
@@ -23,7 +24,6 @@
       <thead>
         <tr>
           <th>Project</th>
-          <th>Client</th>
           <th>Date</th>
           <th>Description</th>
           <th>Hours</th>
@@ -37,11 +37,6 @@
             </select>
           </td>
           <td>
-            <select class="client-select" required>
-              <option value="" disabled selected>-- Select Client --</option>
-            </select>
-          </td>
-          <td>
             <input type="date" class="date-input" required>
           </td>
           <td>
@@ -51,7 +46,6 @@
             <input type="number" class="hours-input" min="0" step="0.25" required>
           </td>
         </tr>
-        <!-- Additional rows can be added dynamically -->
       </tbody>
     </table>
     <button onclick="submitHours()">Submit Hours</button>

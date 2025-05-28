@@ -12,11 +12,12 @@
     <div class="layout">
       <div class="sidebar" id="sidebar">
         <nav>
-          <ul>
-            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-            <li><a href="{{ url_for('log_hours') }}">Log Hours</a></li>
-            <li><a href="{{ url_for('logout') }}">Logout</a></li>
-          </ul>
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('log_hours') }}">Log Hours</a></li>
+                <li><a href="{{ url_for('view_hours') }}">View Hours</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
         </nav>
       </div>
       <main>

@@ -1,28 +1,23 @@
-# Import necessary libraries
+# app.py
 import os
+import traceback
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 
-# Import business logic from custom modules
 from consultant import Consultant
 from project import Project
 from client import Client
 from hours import Hours
 
-# Initialize Flask app
 app = Flask(__name__)
-# Set the secret key used for session management
 app.secret_key = os.environ.get("SECRET_KEY", "dev_2")
 
-# Route: Landing page (renders login page)
 @app.route("/")
 def index():
     return render_template("login.html")
 
-# Route: Handles both GET and POST requests for login
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        # Get username and password from the form
         username = request.form["username"]
         password = request.form["password"]
 
@@ -31,9 +26,8 @@ def login():
 
         if user:
             print(f"User found: {user}")
-            # Check if the password matches
             if password == user["Password"].strip():
-                session["user"] = user["Username"]  # Store username in session
+                session["user"] = user["Username"]
                 flash("Login successful!", "success")
                 return redirect(url_for("dashboard"))
             else:
@@ -43,24 +37,20 @@ def login():
 
         flash("Invalid username or password.", "danger")
 
-    # For GET requests or failed logins, re-render the login page
     return render_template("login.html")
 
-# Route: Handles API login requests via JSON
 @app.route("/api/login", methods=["POST"])
 def api_login():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
 
-    # Input validation
     if not username:
         return jsonify(success=False, errorMessage="Please enter your username")
     if not password:
         return jsonify(success=False, errorMessage="Please enter your password")
 
     user = Consultant.search_username(username)
-    # Validate credentials
     if user and password == user["Password"].strip():
         session["user"] = user["Username"]
         return jsonify(success=True)
@@ -69,7 +59,6 @@ def api_login():
     else:
         return jsonify(success=False, errorMessage="User not found")
 
-# Route: Dashboard
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
@@ -77,24 +66,27 @@ def dashboard():
         return redirect(url_for("login"))
     return render_template("dashboard.html", user=session["user"])
 
-# Route: Logs out the user by clearing the session
 @app.route("/logout")
 def logout():
     session.pop("user", None)
     flash("You have been logged out.", "info")
     return redirect(url_for("login"))
 
-# Route: Prevents errors from favicon requests by returning empty response
 @app.route('/favicon.ico')
 def favicon():
     return "", 204
 
-# Route: Simple health check (used by Azure or monitoring tools)
 @app.route('/health')
 def health():
     return 'OK', 200
 
-# Route: Hours logging page (only accessible if logged in)
+@app.route("/view_hours")
+def view_hours():
+    if "user" not in session:
+        flash("You need to log in first.", "warning")
+        return redirect(url_for("login"))
+    return render_template("view_hours.html", user=session["user"])
+
 @app.route("/hours")
 def log_hours():
     if "user" not in session:
@@ -102,40 +94,100 @@ def log_hours():
         return redirect(url_for("login"))
     return render_template("hours.html", user=session["user"])
 
-# Route: Submits hours via AJAX (POST request with JSON)
 @app.route('/submit_hours', methods=['POST'])
 def submit_hours():
     if 'user' not in session:
         return jsonify({'status': 'error', 'message': 'User not logged in'}), 403
 
-    data = request.get_json()
-    if not data:
-        return jsonify({'status': 'error', 'message': 'No data provided'}), 400
+    try:
+        data = request.get_json()
+        print("Received data:", data)
 
-    # Get consultant ID from the logged-in user's username
-    username = session['user']
-    consultant_id = Hours.get_consultant_id_by_username(username)
+        consultant_id = data.get("consultant_id")
+        if not consultant_id:
+            return jsonify({'status': 'error', 'message': 'Missing consultant ID'}), 400
+
+        entries = data.get("entries")
+        if not entries:
+            return jsonify({'status': 'error', 'message': 'No entries provided'}), 400
+
+        success, result = Hours.upsert_project_details(consultant_id, entries)
+
+        if not success:
+            return jsonify({'status': 'error', 'message': result}), 500
+
+        failed_count = len(result.get("failed_entries", []))
+        total_processed = result.get("rows_inserted", 0) + result.get("rows_updated", 0)
+
+        if failed_count > 0:
+            return jsonify({
+                'status': 'partial_success',
+                'message': f"{total_processed} entries saved, {failed_count} entries failed.",
+                'failed_entries': result.get("failed_entries")
+            }), 207
+
+        if total_processed == 0:
+            return jsonify({'status': 'warning', 'message': 'No new or updated entries were saved.'}), 200
+
+        return jsonify({
+            'status': 'success',
+            'message': f'{result.get("rows_inserted", 0)} inserted, {result.get("rows_updated", 0)} updated.'
+        }), 200
+
+    except Exception as e:
+        print("Submit error:", traceback.format_exc())
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'trace': traceback.format_exc()
+        }), 500
+    
+@app.route("/api/consultant_id", methods=["GET"])
+def get_consultant_id():
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    consultant_id = Consultant.get_consultant_id_by_username(session["user"])
     if not consultant_id:
-        return jsonify({'status': 'error', 'message': 'Consultant not found'}), 400
+        return jsonify({"error": "Consultant ID not found"}), 404
 
-    # Attempt to insert or update project detail records
-    success, error = Hours.upsert_project_details(consultant_id, data)
-    if success:
-        return jsonify({'status': 'success', 'message': 'Hours saved successfully'})
-    else:
-        return jsonify({'status': 'error', 'message': error}), 500
+    return jsonify({"consultant_id": consultant_id})
 
-# Route: Returns list of all projects in JSON format (for dropdowns)
 @app.route('/api/projects', methods=['GET'])
 def get_projects():
-    return jsonify(Project.get_all())
+    print("SESSION:", session)
 
-# Route: Returns list of all clients in JSON format (for dropdowns)
-@app.route('/api/clients', methods=['GET'])
-def get_clients():
-    return jsonify(Client.get_all())
+    if 'user' not in session:
+        print("No user in session.")
+        return jsonify([])
 
-# Route: Checks if a project with the given name already exists
+    username = session['user']
+    print(f"Fetching projects for user: {username}")
+    
+    consultant = Consultant.search_username(username)
+    if not consultant:
+        print("Consultant not found for that user.")
+        return jsonify([])
+
+    consultant_id = Consultant.get_consultant_id_by_username(username)
+    if not consultant_id:
+        print("Consultant ID not found for that user.")
+        return jsonify([])
+
+    raw_projects = Project.get_by_consultant(consultant_id)
+    print("Raw projects data from DB:", raw_projects)
+
+    # Format projects to return 'id' and 'name' as required by frontend
+    projects = []
+    for p in raw_projects:
+        projects.append({
+            "id": p["ProjectID"],
+            "name": p["Project"]
+        })
+
+    print("Formatted projects for JSON:", projects)
+    return jsonify(projects)
+
 @app.route('/api/check_project', methods=['POST'])
 def check_project():
     name = request.json.get('name', '').strip()
@@ -143,16 +195,6 @@ def check_project():
         return jsonify({'exists': False})
     return jsonify({'exists': Project.exists(name)})
 
-# Route: Creates a new project and returns its ID
-@app.route('/api/create_project', methods=['POST'])
-def create_project():
-    name = request.json.get('name', '').strip()
-    if not name:
-        return jsonify({'error': 'Project name required'}), 400
-    project_id = Project.create(name)
-    return jsonify({'id': project_id})
-
-# Route: Checks if a client with the given name already exists
 @app.route('/api/check_client', methods=['POST'])
 def check_client():
     name = request.json.get('name', '').strip()
@@ -160,18 +202,12 @@ def check_client():
         return jsonify({'exists': False})
     return jsonify({'exists': Client.exists(name)})
 
-# Route: Creates a new client and returns its ID
-@app.route('/api/create_client', methods=['POST'])
-def create_client():
-    name = request.json.get('name', '').strip()
-    if not name:
-        return jsonify({'error': 'Client name required'}), 400
-    client_id = Client.create(name)
-    return jsonify({'id': client_id})
+@app.route("/test_consultant_projects/<int:consultant_id>")
+def test_consultant_projects(consultant_id):
+    projects = Project.get_by_consultant(consultant_id)
+    return jsonify(projects)
 
-# Entry point: Runs the Flask development server
 if __name__ == "__main__":
-    # Prevent server from running automatically on Azure
     if os.environ.get("IS_AZURE", "False").lower() != "true":
         print("Starting Flask app locally...")
         app.run(debug=True)

@@ -68,7 +68,9 @@ CREATE TABLE [dbo].[Consultant](
     [UpdatedBy] VARCHAR(50) NOT NULL DEFAULT SYSTEM_USER,
     [UpdatedDate] SMALLDATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
  CONSTRAINT [XPKConsultant] PRIMARY KEY CLUSTERED ([ConsultantID] ASC),
- CONSTRAINT [XAK1Consultant] UNIQUE NONCLUSTERED ([FirstName], [LastName]) 
+ CONSTRAINT [XFK1Consultant] FOREIGN KEY ([LoginID]) REFERENCES [dbo].[Login]([LoginID]) ON DELETE CASCADE,
+ CONSTRAINT [XAK1Consultant] UNIQUE NONCLUSTERED ([FirstName], [LastName]),
+ CONSTRAINT [XAK2Consultant] UNIQUE NONCLUSTERED ([LoginID])
 )
 GO
 
@@ -91,7 +93,6 @@ GO
 CREATE TABLE [dbo].[ProjectDetail](
 	[ProjectDetailID] [smallint] IDENTITY(1,1) NOT NULL,
 	[ProjectConsultantID] [smallint] NOT NULL,
-	[ClientID] [smallint] NOT NULL,
 	[WorkDate] [date] NOT NULL,  
 	[WorkDescription] [varchar](255) NOT NULL,
 	[WorkedHours] [decimal](10,2) NOT NULL,
@@ -101,7 +102,6 @@ CREATE TABLE [dbo].[ProjectDetail](
     [UpdatedDate] SMALLDATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
  CONSTRAINT [XPKProjectDetail] PRIMARY KEY CLUSTERED ([ProjectDetailID] ASC),
  CONSTRAINT [XFK1ProjectDetail] FOREIGN KEY ([ProjectConsultantID]) REFERENCES [dbo].[ProjectConsultant]([ProjectConsultantID]) ON DELETE CASCADE,
- CONSTRAINT [XFK2ProjectDetail] FOREIGN KEY ([ClientID]) REFERENCES [dbo].[Client]([ClientID]) ON DELETE CASCADE,
  CONSTRAINT [XAK1ProjectDetail] UNIQUE NONCLUSTERED ([ProjectConsultantID], [WorkDate])
 )
 GO

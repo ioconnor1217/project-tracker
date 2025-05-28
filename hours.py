@@ -5,38 +5,49 @@ from db import Database
 class Hours:
     @staticmethod
     def upsert_project_details(consultant_id, entries):
-        """
-        Insert or update project detail records for a consultant based on submitted entries.
-        Args: consultant_id (int): ID of the consultant submitting the hours. entries (list): A list of dictionaries.
-        Returns: tuple: (True, None) on success; (False, error_message) on failure.
-        """
+        rows_inserted = 0
+        rows_updated = 0
+        failed_entries = []
+
         for entry in entries:
-            project_id = entry['project_id']
-            client_id = entry['client_id']
-            work_date = entry['date']
-            description = entry['description']
-            hours = entry['hours']
+            try:
+                project_id = entry['project_id']
+                work_date = entry['date']
+                description = entry['description']
+                hours = entry['hours']
 
-            # Get the linking record between the consultant and the project
-            project_consultant_id = Database.get_project_consultant_id(consultant_id, project_id)
-            if not project_consultant_id:
-                # If no link exists, skip
-                continue
+                print(f"Processing entry: {entry}")
 
-            # Check if a work entry already exists for this date
-            existing_detail_id = Database.find_project_detail(project_consultant_id, work_date)
-            if existing_detail_id:
-                # If it exists, update the record
-                success = Database.update_project_detail(existing_detail_id, client_id, description, hours)
-                if not success:
-                    # Return failure if update fails
-                    return False, "Failed to update project detail"
-            else:
-                # If it doesn't exist, insert a new record
-                success = Database.insert_project_detail(project_consultant_id, client_id, work_date, description, hours)
-                if not success:
-                    # Return failure if insert fails
-                    return False, "Failed to insert project detail"
+                project_consultant_id = Database.get_project_consultant_id(consultant_id, project_id)
+                if not project_consultant_id:
+                    msg = f"No ProjectConsultant link for consultant {consultant_id} and project {project_id}"
+                    print(msg)
+                    failed_entries.append({"entry": entry, "reason": msg})
+                    continue
 
-        # Return success if processed successfully
-        return True, None
+                existing_detail_id = Database.find_project_detail(project_consultant_id, work_date)
+                if existing_detail_id:
+                    print(f"Updating ProjectDetail ID {existing_detail_id}")
+                    success = Database.update_project_detail(existing_detail_id, description, hours)
+                    if success:
+                        rows_updated += 1
+                    else:
+                        return False, "Failed to update project detail"
+                else:
+                    print(f"Inserting new ProjectDetail for PCID {project_consultant_id}")
+                    success = Database.insert_project_detail(project_consultant_id, work_date, description, hours)
+                    if success:
+                        rows_inserted += 1
+                    else:
+                        return False, "Failed to insert project detail"
+
+            except Exception as e:
+                import traceback
+                print("Error in upsert_project_details:", traceback.format_exc())
+                return False, str(e)
+
+        return True, {
+            "rows_inserted": rows_inserted,
+            "rows_updated": rows_updated,
+            "failed_entries": failed_entries
+        }

@@ -139,6 +139,40 @@ class Database:
             conn.close()
 
     @staticmethod
+    def get_monthly_logged_hours(consultant_id, year, month):
+        conn = Database.connect()
+        if not conn:
+            return []
+
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT 
+                    c.Company AS Client,
+                    p.Project AS Project,
+                    pd.WorkDate,
+                    pd.WorkDescription,
+                    pd.WorkedHours
+                FROM ProjectDetail pd
+                JOIN ProjectConsultant pc ON pd.ProjectConsultantID = pc.ProjectConsultantID
+                JOIN Project p ON pc.ProjectID = p.ProjectID
+                JOIN Client c ON pc.ClientID = c.ClientID
+                WHERE pc.ConsultantID = ?
+                AND YEAR(pd.WorkDate) = ?
+                AND MONTH(pd.WorkDate) = ?
+                ORDER BY pd.WorkDate
+            ''', (consultant_id, year, month))
+
+            rows = cursor.fetchall()
+            columns = [column[0] for column in cursor.description]
+            return [dict(zip(columns, row)) for row in rows]
+        except Exception as e:
+            print("Error getting monthly logged hours:", e)
+            return []
+        finally:
+            conn.close()
+
+    @staticmethod
     def get_all_projects():
         conn = Database.connect()
         if not conn:

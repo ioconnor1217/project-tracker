@@ -3,6 +3,11 @@ from db import Database
 
 # Define the Hours class
 class Hours:
+
+    @staticmethod
+    def get_logged_hours_by_month(consultant_id, year, month):
+        return Database.get_monthly_logged_hours(consultant_id, year, month)
+
     @staticmethod
     def upsert_project_details(consultant_id, entries):
         rows_inserted = 0

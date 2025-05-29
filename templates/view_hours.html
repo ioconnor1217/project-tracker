@@ -20,6 +20,23 @@
     </div>
     <main>
     <h2>View Hours Here</h2>
+    <div id="month-controls" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+      <button id="prev-month">←</button>
+      <span id="month-display"></span>
+      <button id="next-month">→</button>
+    </div>
+    <table id="logged-hours-table" border="1">
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Project</th>
+          <th>Work Date</th>
+          <th>Description</th>
+          <th>Hours</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </main>
 </body>
 </html>

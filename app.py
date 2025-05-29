@@ -1,6 +1,7 @@
 # app.py
 import os
 import traceback
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 
 from consultant import Consultant
@@ -87,12 +88,37 @@ def view_hours():
         return redirect(url_for("login"))
     return render_template("view_hours.html", user=session["user"])
 
-@app.route("/hours")
+@app.route("/api/logged_hours", methods=["GET"])
+def get_logged_hours():
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        consultant_id = Consultant.get_consultant_id_by_username(session["user"])
+        if not consultant_id:
+            return jsonify({"error": "Consultant not found"}), 404
+
+        year = request.args.get("year", type=int)
+        month = request.args.get("month", type=int)
+
+        if not year or not month:
+            now = datetime.now()
+            year = now.year
+            month = now.month
+
+        data = Hours.get_logged_hours_by_month(consultant_id, year, month)
+        return jsonify({"data": data})
+
+    except Exception as e:
+        print("Error in /api/logged_hours:", e)
+        return jsonify({"error": "An error occurred"}), 500
+
+@app.route("/log_hours")
 def log_hours():
     if "user" not in session:
         flash("You need to log in first.", "warning")
         return redirect(url_for("login"))
-    return render_template("hours.html", user=session["user"])
+    return render_template("log_hours.html", user=session["user"])
 
 @app.route('/submit_hours', methods=['POST'])
 def submit_hours():

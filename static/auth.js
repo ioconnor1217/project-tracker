@@ -98,6 +98,9 @@ function initPage() {
 
     if (currentPath === "/hours") {
       populateDropdowns();
+      initDateControls();
+    } else if (currentPath === "/view_hours") {
+      initMonthControls();
     }
   }
 }
@@ -107,15 +110,15 @@ async function submitHours() {
   const table = document.querySelector("#hours-table tbody");
   const rows = Array.from(table.rows);
   const data = [];
+  const date = formatDate(currentDate); // use central date picker value
 
   rows.forEach((row) => {
     const project_id = row.querySelector(".project-select").value;
-    const date = row.querySelector(".date-input").value;
     const description = row.querySelector(".desc-input").value.trim();
     const hours = parseFloat(row.querySelector(".hours-input").value);
-
-    if (!project_id || !date || !description || isNaN(hours)) return;
-
+  
+    if (!project_id || !description || isNaN(hours)) return;
+  
     data.push({
       project_id: parseInt(project_id),
       date,
@@ -191,3 +194,116 @@ window.addEventListener("DOMContentLoaded", () => {
     loginForm.addEventListener("submit", submitLogin);
   }
 });
+
+// --- Date Handling Variables ---
+let currentDate = new Date();
+
+function formatDate(date) {
+  return date.toISOString().split('T')[0];
+}
+
+function updateDateUI() {
+  const picker = document.getElementById("date-picker");
+  const formatted = formatDate(currentDate);
+
+  if (picker) picker.value = formatted;
+}
+
+function initDateControls() {
+  document.getElementById("prev-day").addEventListener("click", () => {
+    currentDate.setDate(currentDate.getDate() - 1);
+    updateDateUI();
+  });
+
+  document.getElementById("next-day").addEventListener("click", () => {
+    currentDate.setDate(currentDate.getDate() + 1);
+    updateDateUI();
+  });
+
+  document.getElementById("date-picker").addEventListener("change", (e) => {
+    currentDate = new Date(e.target.value);
+    updateDateUI();
+  });
+
+  updateDateUI(); // Initialize on load
+}
+
+// --- Month Navigation & Display ---
+
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth(); // 0-indexed
+
+function formatMonthYear(year, month) {
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+                      "July", "August", "September", "October", "November", "December"];
+  return `${monthNames[month]} ${year}`;
+}
+
+function updateMonthUI() {
+  const display = document.getElementById("month-display");
+  if (display) {
+    display.textContent = formatMonthYear(currentYear, currentMonth);
+  }
+  fetchLoggedHours(currentYear, currentMonth + 1); // backend expects 1-indexed month
+}
+
+function changeMonth(offset) {
+  currentMonth += offset;
+  if (currentMonth < 0) {
+    currentMonth = 11;
+    currentYear -= 1;
+  } else if (currentMonth > 11) {
+    currentMonth = 0;
+    currentYear += 1;
+  }
+  updateMonthUI();
+}
+
+function initMonthControls() {
+  document.getElementById("prev-month").addEventListener("click", () => changeMonth(-1));
+  document.getElementById("next-month").addEventListener("click", () => changeMonth(1));
+  updateMonthUI(); // Initial load
+}
+
+async function fetchLoggedHours(year, month) {
+  try {
+    const response = await fetch(`/api/logged_hours?year=${year}&month=${month}`);
+    const result = await response.json();
+
+    if (!response.ok || !result.data) {
+      throw new Error(result.error || "Failed to load logged hours.");
+    }
+
+    populateLoggedHoursTable(result.data);
+  } catch (err) {
+    console.error("Fetch error:", err);
+    alert("Could not load logged hours.");
+  }
+}
+
+function populateLoggedHoursTable(data) {
+  const tbody = document.querySelector("#logged-hours-table tbody");
+  tbody.innerHTML = "";
+
+  if (!data.length) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 5;
+    cell.textContent = "No hours logged for this month.";
+    row.appendChild(cell);
+    tbody.appendChild(row);
+    return;
+  }
+
+  data.forEach(entry => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${entry.Client}</td>
+      <td>${entry.Project}</td>
+      <td>${entry.WorkDate}</td>
+      <td>${entry.WorkDescription}</td>
+      <td>${entry.WorkedHours}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}

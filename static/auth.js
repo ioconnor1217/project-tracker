@@ -96,7 +96,7 @@ function initPage() {
     enforceSession();
     timeout = setInterval(enforceSession, 60000);
 
-    if (currentPath === "/hours") {
+    if (currentPath === "/log_hours") {
       populateDropdowns();
       initDateControls();
     } else if (currentPath === "/view_hours") {

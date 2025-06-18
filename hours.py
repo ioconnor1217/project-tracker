@@ -3,56 +3,77 @@ from db import Database
 
 # Define the Hours class
 class Hours:
-
     @staticmethod
-    def get_logged_hours_by_month(consultant_id, year, month):
-        return Database.get_monthly_logged_hours(consultant_id, year, month)
-
-    @staticmethod
-    def upsert_project_details(consultant_id, entries):
+    def upsert_project_details(consultant_id, entries, deleted):
         rows_inserted = 0
         rows_updated = 0
+        deleted_count = 0
         failed_entries = []
 
+        # === Handle Deletions ===
+        for entry in deleted:
+            try:
+                project_id = entry["project_id"]
+                work_date = entry["date"]
+                pc_id = Database.get_project_consultant_id(consultant_id, project_id)
+                if pc_id:
+                    detail_id = Database.find_project_detail(pc_id, work_date)
+                    if detail_id:
+                        deleted_successfully = Database.delete_project_detail(detail_id)
+                        if deleted_successfully:
+                            deleted_count += 1
+            except Exception as e:
+                print("Error deleting entry:", e)
+                continue
+
+        # === Handle Inserts and Updates ===
         for entry in entries:
             try:
-                project_id = entry['project_id']
-                work_date = entry['date']
-                description = entry['description']
-                hours = entry['hours']
+                project_id = entry["project_id"]
+                client_id = entry["client_id"]
+                work_date = entry["date"]
+                work_description = entry.get("description", "")
+                worked_hours = entry.get("hours", 0)
 
-                print(f"Processing entry: {entry}")
-
-                project_consultant_id = Database.get_project_consultant_id(consultant_id, project_id)
-                if not project_consultant_id:
-                    msg = f"No ProjectConsultant link for consultant {consultant_id} and project {project_id}"
-                    print(msg)
-                    failed_entries.append({"entry": entry, "reason": msg})
+                pc_id = Database.get_project_consultant_id(consultant_id, project_id)
+                if not pc_id:
+                    print("Missing PC ID")
+                    failed_entries.append(entry)
                     continue
 
-                existing_detail_id = Database.find_project_detail(project_consultant_id, work_date)
-                if existing_detail_id:
-                    print(f"Updating ProjectDetail ID {existing_detail_id}")
-                    success = Database.update_project_detail(existing_detail_id, description, hours)
-                    if success:
+                detail_id = Database.find_project_detail(pc_id, work_date)
+                if detail_id:
+                    # Update existing record
+                    updated = Database.update_project_detail(
+                        detail_id, client_id, work_description, worked_hours
+                    )
+                    if updated:
                         rows_updated += 1
                     else:
-                        return False, "Failed to update project detail"
+                        failed_entries.append(entry)
                 else:
-                    print(f"Inserting new ProjectDetail for PCID {project_consultant_id}")
-                    success = Database.insert_project_detail(project_consultant_id, work_date, description, hours)
-                    if success:
+                    # Insert new record
+                    inserted = Database.insert_project_detail(
+                        pc_id, client_id, work_date, work_description, worked_hours
+                    )
+                    if inserted:
                         rows_inserted += 1
                     else:
-                        return False, "Failed to insert project detail"
+                        failed_entries.append(entry)
 
             except Exception as e:
-                import traceback
-                print("Error in upsert_project_details:", traceback.format_exc())
-                return False, str(e)
+                print("Error upserting entry:", e)
+                failed_entries.append(entry)
+                continue
 
         return True, {
             "rows_inserted": rows_inserted,
             "rows_updated": rows_updated,
+            "rows_deleted": deleted_count,
             "failed_entries": failed_entries
         }
+    
+    @staticmethod
+    def get_logged_hours_by_month(consultant_id, year, month):
+        print(f"Fetching hours for ConsultantID: {consultant_id}, Year: {year}, Month: {month}")
+        return Database.get_monthly_logged_hours(consultant_id, year, month)

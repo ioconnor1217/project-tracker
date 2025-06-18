@@ -1,6 +1,8 @@
 import pyodbc
 import os
 from dotenv import load_dotenv
+from datetime import date
+
 
 load_dotenv()
 
@@ -140,38 +142,52 @@ class Database:
 
     @staticmethod
     def get_monthly_logged_hours(consultant_id, year, month):
+        print(f"Fetching hours for ConsultantID: {consultant_id}, Year: {year}, Month: {month}")
         conn = Database.connect()
         if not conn:
+            print("Database connection failed.")
             return []
 
         try:
             cursor = conn.cursor()
-            cursor.execute('''
+            start_date = date(year, month, 1)
+            if month == 12:
+                end_date = date(year + 1, 1, 1)
+            else:
+                end_date = date(year, month + 1, 1)
+
+            print(f"Using date range: {start_date} to {end_date}")
+            print(f"ConsultantID type: {type(consultant_id)}, start_date type: {type(start_date)}, end_date type: {type(end_date)}")
+
+            sql = '''
                 SELECT 
-                    c.Company AS Client,
-                    p.Project AS Project,
-                    pd.WorkDate,
-                    pd.WorkDescription,
-                    pd.WorkedHours
+                    p.Project AS project,
+                    pd.WorkDate AS date,
+                    pd.WorkDescription AS description,
+                    pd.WorkedHours AS hours
                 FROM ProjectDetail pd
                 JOIN ProjectConsultant pc ON pd.ProjectConsultantID = pc.ProjectConsultantID
                 JOIN Project p ON pc.ProjectID = p.ProjectID
-                JOIN Client c ON pc.ClientID = c.ClientID
                 WHERE pc.ConsultantID = ?
-                AND YEAR(pd.WorkDate) = ?
-                AND MONTH(pd.WorkDate) = ?
-                ORDER BY pd.WorkDate
-            ''', (consultant_id, year, month))
+                AND pd.WorkDate >= ?
+                AND pd.WorkDate < ?
+                ORDER BY pd.WorkDate;
+            '''
 
+            # Pass date objects directly here (not strings)
+            cursor.execute(sql, (consultant_id, start_date, end_date))
             rows = cursor.fetchall()
             columns = [column[0] for column in cursor.description]
-            return [dict(zip(columns, row)) for row in rows]
+            result = [dict(zip(columns, row)) for row in rows]
+
+            print(f"Main query rows returned: {len(result)}")
+            return result
         except Exception as e:
             print("Error getting monthly logged hours:", e)
             return []
         finally:
             conn.close()
-
+        
     @staticmethod
     def get_all_projects():
         conn = Database.connect()
@@ -297,5 +313,25 @@ class Database:
         except Exception as e:
             print("Error in fetch_all:", e)
             return []
+        finally:
+            conn.close()
+
+
+    @staticmethod
+    def delete_project_detail(project_detail_id):
+        conn = Database.connect()
+        if not conn:
+            return False
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                DELETE FROM ProjectDetail
+                WHERE ProjectDetailID = ?
+            ''', (project_detail_id,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print("Error deleting project detail:", e)
+            return False
         finally:
             conn.close()

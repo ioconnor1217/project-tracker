@@ -107,6 +107,7 @@ def get_logged_hours():
             month = now.month
 
         data = Hours.get_logged_hours_by_month(consultant_id, year, month)
+        print("LOGGED HOURS RESULT:", data)  # <-- debugging line
         return jsonify({"data": data})
 
     except Exception as e:

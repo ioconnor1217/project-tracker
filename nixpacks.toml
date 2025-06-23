@@ -1,2 +1,5 @@
 [phases.setup]
 nixPkgs = ["unixODBC"]
+
+[languages]
+python = "3.12"

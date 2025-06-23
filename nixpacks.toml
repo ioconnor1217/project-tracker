@@ -1,0 +1,5 @@
+[provider]
+nix = true
+
+[phases.setup]
+nixPkgs = ["python312", "unixODBC"]

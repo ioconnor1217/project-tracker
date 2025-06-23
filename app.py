@@ -229,6 +229,12 @@ def check_client():
         return jsonify({'exists': False})
     return jsonify({'exists': Client.exists(name)})
 
+@app.route('/api/clients', methods=['GET'])
+def api_get_clients():
+    from db import Database
+    clients = Database.get_all_clients()
+    return jsonify(clients)
+
 @app.route("/test_consultant_projects/<int:consultant_id>")
 def test_consultant_projects(consultant_id):
     projects = Project.get_by_consultant(consultant_id)

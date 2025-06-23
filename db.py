@@ -161,6 +161,7 @@ class Database:
 
             sql = '''
                 SELECT 
+                    c.Company AS client,
                     p.Project AS project,
                     pd.WorkDate AS date,
                     pd.WorkDescription AS description,
@@ -168,6 +169,7 @@ class Database:
                 FROM ProjectDetail pd
                 JOIN ProjectConsultant pc ON pd.ProjectConsultantID = pc.ProjectConsultantID
                 JOIN Project p ON pc.ProjectID = p.ProjectID
+                JOIN Client c ON p.ClientID = c.ClientID
                 WHERE pc.ConsultantID = ?
                 AND pd.WorkDate >= ?
                 AND pd.WorkDate < ?

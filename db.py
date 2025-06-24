@@ -19,40 +19,32 @@ class Database:
                     f"SERVER={os.getenv('AZURE_DB_SERVER')};"
                     f"DATABASE={os.getenv('AZURE_DB_NAME')};"
                     f"UID={os.getenv('AZURE_DB_USER')};"
-                    f"PWD=***;"  # Masked for logs
+                    f"PWD={os.getenv('AZURE_DB_PASSWORD')};"
                     f"Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
                 )
-                print(f"[DB] Connecting to Azure SQL with: SERVER={os.getenv('AZURE_DB_SERVER')}, DB={os.getenv('AZURE_DB_NAME')}, USER={os.getenv('AZURE_DB_USER')}, IS_AZURE={is_azure}")
             else:
                 conn_str = (
                     f"DRIVER={{ODBC Driver 18 for SQL Server}};"
                     f"SERVER={os.getenv('LOCAL_DB_SERVER')};"
                     f"DATABASE={os.getenv('LOCAL_DB_NAME')};"
                     f"UID={os.getenv('LOCAL_DB_USER')};"
-                    f"PWD=***;"  # Masked for logs
+                    f"PWD={os.getenv('LOCAL_DB_PASSWORD')};"
                     f"TrustServerCertificate=yes;"
                 )
-                print(f"[DB] Connecting to LOCAL SQL with: SERVER={os.getenv('LOCAL_DB_SERVER')}, DB={os.getenv('LOCAL_DB_NAME')}, USER={os.getenv('LOCAL_DB_USER')}, IS_AZURE={is_azure}")
-            # Use real password in actual connection
-            real_conn_str = conn_str.replace('PWD=***;', f"PWD={os.getenv('AZURE_DB_PASSWORD') if is_azure else os.getenv('LOCAL_DB_PASSWORD')};")
-            return pyodbc.connect(real_conn_str)
+            return pyodbc.connect(conn_str)
         except Exception as e:
-            print("[DB] Database connection error:", e)
+            print("Database connection error:", e)
             return None
 
     @staticmethod
     def search_username(username):
-        print(f"[DB] search_username called with: {username}")
         conn = Database.connect()
         if not conn:
-            print("[DB] No DB connection available!")
             return None
         try:
             cursor = conn.cursor()
-            print(f"[DB] Executing: SELECT LoginID, Login, Password FROM Login WHERE Login = ? with param: {username}")
             cursor.execute("SELECT LoginID, Login, Password FROM Login WHERE Login = ?", (username,))
             row = cursor.fetchone()
-            print(f"[DB] Query result: {row}")
             if row:
                 return {
                     "LoginID": row[0],
@@ -60,7 +52,7 @@ class Database:
                     "Password": row[2].strip()
                 }
         except Exception as e:
-            print("[DB] Error searching username:", e)
+            print("Error searching username:", e)
         finally:
             conn.close()
         return None

@@ -3,11 +3,15 @@ import os
 import traceback
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+import pyodbc
+from dotenv import load_dotenv
 
 from consultant import Consultant
 from project import Project
 from client import Client
 from hours import Hours
+
+print("APP STARTED")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_2")

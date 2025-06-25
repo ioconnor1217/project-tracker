@@ -11,7 +11,6 @@ class Database:
     @staticmethod
     def connect():
         is_azure = os.getenv("IS_AZURE", "False") == "True"
-
         try:
             if is_azure:
                 conn_str = (
@@ -31,20 +30,24 @@ class Database:
                     f"PWD={os.getenv('LOCAL_DB_PASSWORD')};"
                     f"TrustServerCertificate=yes;"
                 )
+            print(f"[DB] Attempting connection: {conn_str}")
             return pyodbc.connect(conn_str)
         except Exception as e:
-            print("Database connection error:", e)
+            print("[DB] Database connection error:", e)
             return None
 
     @staticmethod
     def search_username(username):
+        print(f"[DB] Searching for username: '{username}'")
         conn = Database.connect()
         if not conn:
+            print("[DB] No DB connection available!")
             return None
         try:
             cursor = conn.cursor()
             cursor.execute("SELECT LoginID, Login, Password FROM Login WHERE Login = ?", (username,))
             row = cursor.fetchone()
+            print(f"[DB] Query result: {row}")
             if row:
                 return {
                     "LoginID": row[0],
@@ -52,7 +55,7 @@ class Database:
                     "Password": row[2].strip()
                 }
         except Exception as e:
-            print("Error searching username:", e)
+            print("[DB] Error searching username:", e)
         finally:
             conn.close()
         return None

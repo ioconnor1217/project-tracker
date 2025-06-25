@@ -1,3 +1,5 @@
+print("TOP OF APP.PY")
+raise Exception("TEST EXCEPTION AT TOP")
 try:
     print("APP STARTED")
     import pyodbc
@@ -250,6 +252,7 @@ def test_consultant_projects(consultant_id):
     return jsonify(projects)
 
 if __name__ == "__main__":
+    print("IN MAIN BLOCK")
     if os.environ.get("IS_AZURE", "False").lower() != "true":
         print("Starting Flask app locally...")
         app.run(debug=True)

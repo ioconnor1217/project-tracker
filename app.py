@@ -1,36 +1,23 @@
-
-from flask import Flask
-
-app = Flask(__name__)
-
-print("APP STARTED - MINIMAL APP")
-
-@app.route("/")
-def index():
-    print("INDEX ROUTE HIT - MINIMAL APP")
-    return "Hello from minimal app!", 200
-
-"""try:
+print("APP.PY TOP - FULL APP")
+from datetime import datetime  # Ensure datetime is always available
+try:
     import pyodbc
     import os
     import traceback
     from dotenv import load_dotenv
     from datetime import date
+    from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+    from consultant import Consultant
+    from project import Project
+    from client import Client
+    from hours import Hours
 except Exception as e:
     print("IMPORT ERROR:", e)
-    raise
-
-# app.py
-from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
-
-from consultant import Consultant
-from project import Project
-from client import Client
-from hours import Hours
+    import sys
+    sys.exit(1)
 
 app = Flask(__name__)
-print("APP STARTED")
+print("APP OBJECT CREATED")
 app.secret_key = os.environ.get("SECRET_KEY", "dev_2")
 
 @app.route("/")
@@ -266,4 +253,4 @@ if __name__ == "__main__":
     print("IN MAIN BLOCK")
     if os.environ.get("IS_AZURE", "False").lower() != "true":
         print("Starting Flask app locally...")
-        app.run(debug=True)"""
+        app.run(debug=True)

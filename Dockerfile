@@ -20,4 +20,4 @@ COPY . .
 EXPOSE 8080
 
 # Start the app with gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
+CMD ["gunicorn", "--chdir", "project-tracker", "--bind", "0.0.0.0:8080", "app:app"]

@@ -19,5 +19,5 @@ COPY . .
 # Expose the port Railway expects
 EXPOSE 8080
 
-# Start the app with gunicorn from the correct directory
-CMD ["gunicorn", "--chdir", "/app/project-tracker", "--bind", "0.0.0.0:8080", "app:app"]
+# Start the app with gunicorn from the current directory
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]

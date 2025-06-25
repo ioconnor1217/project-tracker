@@ -1,4 +1,16 @@
-try:
+
+from flask import Flask
+
+app = Flask(__name__)
+
+print("APP STARTED - MINIMAL APP")
+
+@app.route("/")
+def index():
+    print("INDEX ROUTE HIT - MINIMAL APP")
+    return "Hello from minimal app!", 200
+
+"""try:
     import pyodbc
     import os
     import traceback
@@ -254,4 +266,4 @@ if __name__ == "__main__":
     print("IN MAIN BLOCK")
     if os.environ.get("IS_AZURE", "False").lower() != "true":
         print("Starting Flask app locally...")
-        app.run(debug=True)
+        app.run(debug=True)"""

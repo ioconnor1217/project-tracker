@@ -1,5 +1,4 @@
 try:
-    print("APP STARTED")
     import pyodbc
     import os
     import traceback
@@ -19,10 +18,12 @@ from client import Client
 from hours import Hours
 
 app = Flask(__name__)
+print("APP STARTED")
 app.secret_key = os.environ.get("SECRET_KEY", "dev_2")
 
 @app.route("/")
 def index():
+    print("INDEX ROUTE HIT")
     return render_template("login.html")
 
 @app.route("/login", methods=["GET", "POST"])

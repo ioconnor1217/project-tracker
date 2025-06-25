@@ -1,5 +1,3 @@
-print("TOP OF APP.PY")
-raise Exception("TEST EXCEPTION AT TOP")
 try:
     print("APP STARTED")
     import pyodbc

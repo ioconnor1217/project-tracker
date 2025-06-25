@@ -1,8 +1,12 @@
-print("APP.PY TOP - FULL APP")
+import sys
+import os
+sys.stdout.reconfigure(line_buffering=True)
+sys.stderr.reconfigure(line_buffering=True)
+os.environ["PYTHONUNBUFFERED"] = "1"
+print("APP.PY TOP - FULL APP", flush=True)
 from datetime import datetime  # Ensure datetime is always available
 try:
     import pyodbc
-    import os
     import traceback
     from dotenv import load_dotenv
     from datetime import date
@@ -12,12 +16,12 @@ try:
     from client import Client
     from hours import Hours
 except Exception as e:
-    print("IMPORT ERROR:", e)
+    print("IMPORT ERROR:", e, flush=True)
     import sys
     sys.exit(1)
 
 app = Flask(__name__)
-print("APP OBJECT CREATED")
+print("APP OBJECT CREATED", flush=True)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_2")
 
 @app.route("/")
@@ -116,7 +120,7 @@ def get_logged_hours():
             month = now.month
 
         data = Hours.get_logged_hours_by_month(consultant_id, year, month)
-        print("LOGGED HOURS RESULT:", data)  # <-- debugging line
+        print("LOGGED HOURS RESULT:", data, flush=True)  # <-- debugging line
         return jsonify({"data": data})
 
     except Exception as e:
@@ -137,7 +141,7 @@ def submit_hours():
 
     try:
         data = request.get_json()
-        print("Received data:", data)
+        print("Received data:", data, flush=True)
 
         consultant_id = data.get("consultant_id")
         if not consultant_id:
@@ -191,27 +195,27 @@ def get_consultant_id():
 
 @app.route('/api/projects', methods=['GET'])
 def get_projects():
-    print("SESSION:", session)
+    print("SESSION:", session, flush=True)
 
     if 'user' not in session:
-        print("No user in session.")
+        print("No user in session.", flush=True)
         return jsonify([])
 
     username = session['user']
-    print(f"Fetching projects for user: {username}")
+    print(f"Fetching projects for user: {username}", flush=True)
     
     consultant = Consultant.search_username(username)
     if not consultant:
-        print("Consultant not found for that user.")
+        print("Consultant not found for that user.", flush=True)
         return jsonify([])
 
     consultant_id = Consultant.get_consultant_id_by_username(username)
     if not consultant_id:
-        print("Consultant ID not found for that user.")
+        print("Consultant ID not found for that user.", flush=True)
         return jsonify([])
 
     raw_projects = Project.get_by_consultant(consultant_id)
-    print("Raw projects data from DB:", raw_projects)
+    print("Raw projects data from DB:", raw_projects, flush=True)
 
     # Format projects to return 'id' and 'name' as required by frontend
     projects = []
@@ -221,7 +225,7 @@ def get_projects():
             "name": p["Project"]
         })
 
-    print("Formatted projects for JSON:", projects)
+    print("Formatted projects for JSON:", projects, flush=True)
     return jsonify(projects)
 
 @app.route('/api/check_project', methods=['POST'])

@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard</title>
+  <title>View Hours</title>
+  <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
   <script defer src="{{ url_for('static', filename='auth.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='view_hours.js') }}"></script>
 </head>
 <body>
   <div class="layout">
@@ -25,18 +28,7 @@
       <span id="month-display"></span>
       <button id="next-month">→</button>
     </div>
-    <table id="logged-hours-table" border="1">
-      <thead>
-        <tr>
-          <th>Client</th>
-          <th>Project</th>
-          <th>Work Date</th>
-          <th>Description</th>
-          <th>Hours</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div id="view-hours-table"></div>
   </main>
 </body>
 </html>

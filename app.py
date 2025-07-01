@@ -4,6 +4,7 @@ sys.stdout.reconfigure(line_buffering=True)
 sys.stderr.reconfigure(line_buffering=True)
 os.environ["PYTHONUNBUFFERED"] = "1"
 print("APP.PY TOP - FULL APP", flush=True)
+
 from datetime import datetime  # Ensure datetime is always available
 try:
     import pyodbc
@@ -113,14 +114,19 @@ def get_logged_hours():
 
         year = request.args.get("year", type=int)
         month = request.args.get("month", type=int)
+        day = request.args.get("day", type=int)
 
         if not year or not month:
             now = datetime.now()
             year = now.year
             month = now.month
 
-        data = Hours.get_logged_hours_by_month(consultant_id, year, month)
-        print("LOGGED HOURS RESULT:", data, flush=True)  # <-- debugging line
+        if day:
+            # If day is provided, filter for that specific date
+            data = Hours.get_logged_hours_by_day(consultant_id, year, month, day)
+        else:
+            data = Hours.get_logged_hours_by_month(consultant_id, year, month)
+        print("LOGGED HOURS RESULT:", data, flush=True)
         return jsonify({"data": data})
 
     except Exception as e:
@@ -151,7 +157,8 @@ def submit_hours():
         if not entries:
             return jsonify({'status': 'error', 'message': 'No entries provided'}), 400
 
-        success, result = Hours.upsert_project_details(consultant_id, entries)
+        deleted = data.get("deleted", [])  # Default to empty list if not provided
+        success, result = Hours.upsert_project_details(consultant_id, entries, deleted)
 
         if not success:
             return jsonify({'status': 'error', 'message': result}), 500

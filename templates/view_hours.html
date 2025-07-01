@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>View Hours</title>
+  <title>View Monthly Hours</title>
   <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
   <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
@@ -22,10 +22,10 @@
       </nav>
     </div>
     <main>
-    <h2>View Hours Here</h2>
+    <h2>View Monthly Hours</h2>
     <div id="month-controls" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
       <button id="prev-month">←</button>
-      <span id="month-display"></span>
+      <input type="month" id="month-picker" style="font-size:1rem; padding:2px 6px;">
       <button id="next-month">→</button>
     </div>
     <div id="view-hours-table"></div>

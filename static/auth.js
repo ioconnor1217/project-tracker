@@ -277,7 +277,7 @@ async function fetchLoggedHours(year, month) {
     populateLoggedHoursTable(result.data);
   } catch (err) {
     console.error("Fetch error:", err);
-    alert("Could not load logged hours.");
+    // alert("Could not load logged hours."); // Disabled to prevent popup in View Hours
   }
 }
 

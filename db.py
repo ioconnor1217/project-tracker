@@ -168,7 +168,8 @@ class Database:
                     p.Project AS project,
                     pd.WorkDate AS date,
                     pd.WorkDescription AS description,
-                    pd.WorkedHours AS hours
+                    pd.WorkedHours AS hours,
+                    pc.BillingRate AS rate
                 FROM ProjectDetail pd
                 JOIN ProjectConsultant pc ON pd.ProjectConsultantID = pc.ProjectConsultantID
                 JOIN Project p ON pc.ProjectID = p.ProjectID

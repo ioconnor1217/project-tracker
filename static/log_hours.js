@@ -57,7 +57,7 @@ async function setupGrid() {
         editor: "input",
         formatter: function(cell) {
           const value = cell.getValue();
-          if (!value || value === "Enter description...") {
+          if (!value) {
             return '<span style="color:#888">Enter description...</span>';
           }
           return value;
@@ -79,35 +79,43 @@ async function setupGrid() {
         bottomCalcFormatter: function(cell) { return "Total Daily Hours: " + cell.getValue(); }
       },
       {
-        formatter: "buttonCross",
+        formatter: function(cell) {
+          const row = cell.getRow().getData();
+          // Only show delete button if all fields are filled
+          const hasProject = row.project !== null && row.project !== undefined && row.project !== "";
+          const hasDescription = row.description && row.description !== "Enter description..." && row.description.trim() !== "";
+          const hasHours = row.hours && !isNaN(Number(row.hours)) && Number(row.hours) > 0;
+          if (hasProject && hasDescription && hasHours) {
+            return '<span style="color:red;cursor:pointer;font-size:1.2em;">&#10006;</span>';
+          } else {
+            return '';
+          }
+        },
         width: 40,
         hozAlign: "center",
         cellClick: function (e, cell) {
           const rowData = cell.getRow().getData();
-          // Only track deleted rows that have a project and hours (i.e., not the placeholder row)
-          if (rowData.project && rowData.description && rowData.hours) {
+          // Only allow delete if all fields are filled
+          const hasProject = rowData.project !== null && rowData.project !== undefined && rowData.project !== "";
+          const hasDescription = rowData.description && rowData.description !== "Enter description..." && rowData.description.trim() !== "";
+          const hasHours = rowData.hours && !isNaN(Number(rowData.hours)) && Number(rowData.hours) > 0;
+          if (hasProject && hasDescription && hasHours) {
             deletedRows.push({
               project_id: typeof rowData.project === "number" ? rowData.project : (projectOptions.find(opt => opt.label === rowData.project)?.value),
               date: selectedDate.toISOString().split('T')[0]
             });
+            cell.getRow().delete();
           }
-          cell.getRow().delete();
         }
       }
     ],
     cellEditing: function(cell) {
-      // Clear placeholder for description and hours on edit
-      if (cell.getField() === "description" && (cell.getValue() === "Enter description..." || !cell.getValue())) {
-        cell.setValue("");
-      }
-      if (cell.getField() === "hours" && (!cell.getValue() || cell.getValue() === 0 || cell.getValue() === "0")) {
-        cell.setValue("");
-      }
+      // No need to clear placeholder, value is always empty string for empty
     },
     cellEdited: function(cell) {
-      // Restore placeholder if left empty
+      // If description is left empty, keep as empty string (formatter will show placeholder)
       if (cell.getField() === "description" && (!cell.getValue() || cell.getValue().trim() === "")) {
-        cell.setValue("Enter description...");
+        cell.setValue("");
       }
       if (cell.getField() === "hours") {
         const val = Number(cell.getValue());
@@ -178,18 +186,24 @@ async function loadLoggedHours(year, month, day) {
           const found = projectOptions.find(opt => opt.label === row.project);
           if (found) project_id = found.value;
         }
+        // Always use empty string for empty description
+        let desc = row.description || row.WorkDescription || "";
+        if (desc === "Enter description...") desc = "";
+        // Always use empty string for empty hours
+        let hrs = row.hours || row.WorkedHours || 0.0;
+        if (!hrs || hrs === 0 || hrs === "0") hrs = "";
         return {
           project: project_id,
-          description: row.description || row.WorkDescription || "",
-          hours: row.hours || row.WorkedHours || 0.0
+          description: desc,
+          hours: hrs
         };
       });
     }
     // Always append a blank placeholder row for new entry
     mapped.push({
       project: null, // null so Tabulator select shows placeholder
-      description: "Enter description...",
-      hours: 0.0
+      description: "",
+      hours: ""
     });
     table.setData(mapped);
   } catch (err) {
@@ -201,8 +215,8 @@ async function loadLoggedHours(year, month, day) {
 async function saveGridData() {
   const data = table.getData();
 
-  // Exclude the last row if it's the placeholder (no project, no description, hours 0.0)
-  const filteredData = data.filter(row => row.project !== null || (row.description && row.description !== "Enter description...") || (row.hours && Number(row.hours) !== 0));
+  // Exclude the last row if it's the placeholder (no project, no description, hours empty or 0)
+  const filteredData = data.filter(row => row.project !== null || (row.description && row.description.trim() !== "") || (row.hours && Number(row.hours) !== 0));
 
   // Map project (id or label) to project_id and include the selected date
   const entries = filteredData.map(row => {
@@ -222,7 +236,7 @@ async function saveGridData() {
     return {
       project_id,
       project_label,
-      description: row.description && row.description.trim() && row.description !== "Enter description..." ? row.description.trim() : null,
+      description: row.description && row.description.trim() ? row.description.trim() : null,
       hours: row.hours && !isNaN(Number(row.hours)) ? Number(row.hours) : null,
       date: selectedDate.toISOString().split('T')[0]
     };
@@ -231,7 +245,7 @@ async function saveGridData() {
   // Filter out rows with missing required fields or hours <= 0
   const validEntries = entries.filter(e => e.project_id && e.description && e.hours !== null && e.hours !== "" && e.hours > 0);
 
-  if (!validEntries.length) {
+  if (!validEntries.length && deletedRows.length === 0) {
     // Find the first invalid row for a more specific error
     const firstInvalid = entries.find(e => !e.project_id || !e.description || e.hours === null || e.hours === "" || e.hours <= 0);
     let msg = "Please select a project, enter a description, and enter hours greater than zero before saving.";
@@ -275,7 +289,12 @@ async function saveGridData() {
     });
 
     const result = await response.json();
-    alert(result.message || "Saved.");
+    // Custom message for delete-only actions
+    if ((result.rows_inserted === 0 && result.rows_updated === 0) && result.rows_deleted > 0) {
+      alert(`${result.rows_deleted} entr${result.rows_deleted === 1 ? 'y' : 'ies'} deleted.`);
+    } else {
+      alert(result.message || "Saved.");
+    }
 
     // After successful save, reload grid and add a new placeholder row
     await reloadGridForSelectedDate();

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Data Works Consulting{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dataworks-theme.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header>
+    <a href="/" class="logo">Data Works Employee Portal</a>
+    {% if session['user'] %}
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="topnav">
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('log_hours') }}">Log Hours</a>
+        <a href="{{ url_for('view_hours') }}">View Hours</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </nav>
+      <aside id="sidebar" class="sidebar">
+        <button class="close-btn" id="closeSidebar" aria-label="Close menu">&times;</button>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('log_hours') }}">Log Hours</a>
+        <a href="{{ url_for('view_hours') }}">View Hours</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </aside>
+    {% endif %}
+  </header>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var sidebar = document.getElementById('sidebar');
+      var toggle = document.getElementById('sidebarToggle');
+      var closeBtn = document.getElementById('closeSidebar');
+      if (toggle && sidebar) {
+        toggle.onclick = function() {
+          sidebar.classList.toggle('open');
+        };
+      }
+      if (closeBtn && sidebar) {
+        closeBtn.onclick = function() {
+          sidebar.classList.remove('open');
+        };
+      }
+    });
+  </script>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-message">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    &copy; {{ 2025 }} Data Works Consulting. All rights reserved.<br>
+    7472 Palm Avenue, Sebastopol, CA 95472 &bull; (707) 823-3490 &bull; <a href="mailto:info@dataworks-consulting.com" style="color:#fff;text-decoration:underline;">info@dataworks-consulting.com</a>
+  </footer>
+</body>
+</html>

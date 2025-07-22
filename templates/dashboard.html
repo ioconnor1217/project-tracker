@@ -1,26 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+{% extends "base.html" %}
+{% block title %}Dashboard | Data Works Employee Portal{% endblock %}
+{% block extra_head %}
   <script defer src="{{ url_for('static', filename='auth.js') }}"></script>
-</head>
-<body>
-  <div class="layout">
-    <div class="sidebar" id="sidebar">
-      <nav>
-        <ul>
-          <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-          <li><a href="{{ url_for('log_hours') }}">Log Hours</a></li>
-          <li><a href="{{ url_for('view_hours') }}">View Hours</a></li>
-          <li><a href="{{ url_for('logout') }}">Logout</a></li>
-        </ul>
-      </nav>
-    </div>
-    <main>
+{% endblock %}
+{% block content %}
+  <div class="dashboard-splash">
     <h2 class="welcome">Welcome, <span id="username">{{ session['user'] }}</span>!</h2>
-    <p>Use the sidebar to make a selection</p>
-  </main>
-</body>
-</html>
+    <p>Use the navigation above to make a selection.</p>
+  </div>
+{% endblock %}

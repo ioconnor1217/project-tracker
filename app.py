@@ -1,3 +1,4 @@
+## (Removed misplaced context processor; correct one is after app = Flask(__name__))
 import sys
 import os
 sys.stdout.reconfigure(line_buffering=True)
@@ -21,9 +22,15 @@ except Exception as e:
     import sys
     sys.exit(1)
 
+
 app = Flask(__name__)
 print("APP OBJECT CREATED", flush=True)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_2")
+
+# Make session available in all templates
+@app.context_processor
+def inject_session():
+    return dict(session=session)
 
 @app.route("/")
 def index():
@@ -153,11 +160,15 @@ def submit_hours():
         if not consultant_id:
             return jsonify({'status': 'error', 'message': 'Missing consultant ID'}), 400
 
-        entries = data.get("entries")
-        if not entries:
-            return jsonify({'status': 'error', 'message': 'No entries provided'}), 400
 
+        entries = data.get("entries")
         deleted = data.get("deleted", [])  # Default to empty list if not provided
+        if (not entries or len(entries) == 0) and (not deleted or len(deleted) == 0):
+            return jsonify({'status': 'error', 'message': 'No entries or deletions provided'}), 400
+
+        # Ensure entries is at least an empty list for upsert_project_details
+        if not entries:
+            entries = []
         success, result = Hours.upsert_project_details(consultant_id, entries, deleted)
 
         if not success:

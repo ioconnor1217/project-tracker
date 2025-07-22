@@ -2,6 +2,7 @@ let consultantId;
 let table;
 let selectedDate = new Date();
 let projectOptions = [];
+let deletedRows = [];
 
 // Set selectedDate to the user's local date (not UTC)
 let now = new Date();
@@ -66,6 +67,7 @@ async function setupGrid() {
         title: "Hours",
         field: "hours",
         editor: "number",
+        editorParams: { min: 0.01, step: 0.01 },
         formatter: function(cell) {
           const value = cell.getValue();
           if (!value || value === 0 || value === "0" || value === "") {
@@ -81,6 +83,14 @@ async function setupGrid() {
         width: 40,
         hozAlign: "center",
         cellClick: function (e, cell) {
+          const rowData = cell.getRow().getData();
+          // Only track deleted rows that have a project and hours (i.e., not the placeholder row)
+          if (rowData.project && rowData.description && rowData.hours) {
+            deletedRows.push({
+              project_id: typeof rowData.project === "number" ? rowData.project : (projectOptions.find(opt => opt.label === rowData.project)?.value),
+              date: selectedDate.toISOString().split('T')[0]
+            });
+          }
           cell.getRow().delete();
         }
       }
@@ -99,8 +109,12 @@ async function setupGrid() {
       if (cell.getField() === "description" && (!cell.getValue() || cell.getValue().trim() === "")) {
         cell.setValue("Enter description...");
       }
-      if (cell.getField() === "hours" && (!cell.getValue() || cell.getValue() === "")) {
-        cell.setValue(0);
+      if (cell.getField() === "hours") {
+        const val = Number(cell.getValue());
+        if (!val || val <= 0) {
+          alert("Please enter a number of hours greater than zero.");
+          cell.setValue("");
+        }
       }
     }
   });
@@ -230,15 +244,23 @@ async function saveGridData() {
     return;
   }
 
-  // Check for duplicate project entries for the same day
-  const projectCounts = {};
+  // Check for duplicate project entries for the same day (including already saved entries)
+  // Get all loaded project IDs for the day (excluding placeholder row)
+  const loadedRows = table.getData().filter(row => row.project !== null && row.project !== undefined && row.project !== "");
+  const loadedProjectIds = loadedRows.map(row => (typeof row.project === "number") ? row.project : (projectOptions.find(opt => opt.label === row.project)?.value)).filter(Boolean);
+
+  // For each entry being saved, if its project_id appears more than once in loadedProjectIds, warn
+  const projectIdCounts = {};
+  loadedProjectIds.forEach(pid => { projectIdCounts[pid] = (projectIdCounts[pid] || 0) + 1; });
+  let duplicateEntry = null;
   for (const entry of validEntries) {
-    if (!projectCounts[entry.project_id]) projectCounts[entry.project_id] = 0;
-    projectCounts[entry.project_id]++;
+    if (projectIdCounts[entry.project_id] > 1) {
+      duplicateEntry = entry;
+      break;
+    }
   }
-  const duplicateProject = validEntries.find(e => projectCounts[e.project_id] > 1);
-  if (duplicateProject) {
-    const projectName = duplicateProject.project_label || "this";
+  if (duplicateEntry) {
+    const projectName = duplicateEntry.project_label || "this";
     const confirmMsg = `Are you sure you want to make multiple entries for the '${projectName}' project on this day?`;
     if (!window.confirm(confirmMsg)) {
       return;
@@ -249,7 +271,7 @@ async function saveGridData() {
     const response = await fetch("/submit_hours", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ consultant_id: consultantId, entries: validEntries })
+      body: JSON.stringify({ consultant_id: consultantId, entries: validEntries, deleted: deletedRows })
     });
 
     const result = await response.json();
@@ -257,6 +279,7 @@ async function saveGridData() {
 
     // After successful save, reload grid and add a new placeholder row
     await reloadGridForSelectedDate();
+    deletedRows = [];
     // After reload, a new placeholder row will be appended automatically
   } catch (err) {
     console.error("Save failed:", err);

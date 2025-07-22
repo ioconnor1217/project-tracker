@@ -193,34 +193,56 @@ async function saveGridData() {
   // Map project (id or label) to project_id and include the selected date
   const entries = filteredData.map(row => {
     let project_id = null;
+    let project_label = null;
     if (typeof row.project === "number") {
       project_id = row.project;
+      const found = projectOptions.find(opt => opt.value === row.project);
+      if (found) project_label = found.label;
     } else if (typeof row.project === "string") {
       const projectObj = projectOptions.find(opt => opt.label === row.project);
-      if (projectObj) project_id = projectObj.value;
+      if (projectObj) {
+        project_id = projectObj.value;
+        project_label = projectObj.label;
+      }
     }
     return {
       project_id,
+      project_label,
       description: row.description && row.description.trim() && row.description !== "Enter description..." ? row.description.trim() : null,
       hours: row.hours && !isNaN(Number(row.hours)) ? Number(row.hours) : null,
       date: selectedDate.toISOString().split('T')[0]
     };
   });
 
-  // Filter out rows with missing required fields
-  const validEntries = entries.filter(e => e.project_id && e.description && e.hours !== null && e.hours !== "");
+  // Filter out rows with missing required fields or hours <= 0
+  const validEntries = entries.filter(e => e.project_id && e.description && e.hours !== null && e.hours !== "" && e.hours > 0);
 
   if (!validEntries.length) {
     // Find the first invalid row for a more specific error
-    const firstInvalid = entries.find(e => !e.project_id || !e.description || e.hours === null || e.hours === "");
-    let msg = "Please select a project, enter a description, and enter hours before saving.";
+    const firstInvalid = entries.find(e => !e.project_id || !e.description || e.hours === null || e.hours === "" || e.hours <= 0);
+    let msg = "Please select a project, enter a description, and enter hours greater than zero before saving.";
     if (firstInvalid) {
       if (!firstInvalid.project_id) msg = "Please choose a project.";
       else if (!firstInvalid.description) msg = "Please enter a description.";
-      else if (firstInvalid.hours === null || firstInvalid.hours === "") msg = "Please enter a valid number of hours.";
+      else if (firstInvalid.hours === null || firstInvalid.hours === "" || firstInvalid.hours <= 0) msg = "Please enter a valid number of hours greater than zero.";
     }
     alert(msg);
     return;
+  }
+
+  // Check for duplicate project entries for the same day
+  const projectCounts = {};
+  for (const entry of validEntries) {
+    if (!projectCounts[entry.project_id]) projectCounts[entry.project_id] = 0;
+    projectCounts[entry.project_id]++;
+  }
+  const duplicateProject = validEntries.find(e => projectCounts[e.project_id] > 1);
+  if (duplicateProject) {
+    const projectName = duplicateProject.project_label || "this";
+    const confirmMsg = `Are you sure you want to make multiple entries for the '${projectName}' project on this day?`;
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
   }
 
   try {

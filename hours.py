@@ -42,17 +42,27 @@ class Hours:
                     failed_entries.append(entry)
                     continue
 
-                # Always insert a new record, allow multiple entries per project per day
-                inserted = Database.insert_project_detail(
-                    pc_id, work_date, work_description, worked_hours
-                )
-                if inserted:
-                    rows_inserted += 1
+                # Check if a detail already exists for this project consultant and date
+                detail_id = Database.find_project_detail(pc_id, work_date)
+                if detail_id:
+                    # Update existing record
+                    updated = Database.update_project_detail(detail_id, work_description, worked_hours)
+                    if updated:
+                        rows_updated += 1
+                    else:
+                        failed_entries.append(entry)
                 else:
-                    failed_entries.append(entry)
+                    # Insert new record
+                    inserted = Database.insert_project_detail(
+                        pc_id, work_date, work_description, worked_hours
+                    )
+                    if inserted:
+                        rows_inserted += 1
+                    else:
+                        failed_entries.append(entry)
 
             except Exception as e:
-                print("Error inserting entry:", e)
+                print("Error inserting/updating entry:", e)
                 failed_entries.append(entry)
                 continue
 

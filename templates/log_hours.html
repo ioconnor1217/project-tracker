@@ -7,12 +7,15 @@
   <script defer src="{{ url_for('static', filename='log_hours.js') }}"></script>
 {% endblock %}
 {% block content %}
-  <h2>Log Daily Hours</h2>
-  <div id="date-controls" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-    <button id="prev-day">←</button>
-    <input type="date" id="date-picker">
-    <button id="next-day">→</button>
+  <div id="log-hours-centerwrap" style="display: flex; flex-direction: column; align-items: center;">
+    <h2>Log Daily Hours</h2>
+    <div id="date-controls" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+      <button id="prev-day">←</button>
+      <input type="date" id="date-picker">
+      <button id="next-day">→</button>
+    </div>
+    <div id="hours-table"></div>
+    <div id="log-hours-summary" style="margin:18px 0 0 0; font-weight:600; font-size:1.1em; color:#4A90E2;"></div>
+    <button id="save-btn" style="margin-top: 1rem;">Save All</button>
   </div>
-  <div id="hours-table"></div>
-  <button id="save-btn">Save All</button>
 {% endblock %}

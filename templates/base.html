@@ -8,12 +8,18 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body>
-  <header>
-    <a href="/" class="logo">Data Works Employee Portal</a>
+  <header style="background: #4A90E2; padding: 0.7rem 1.5rem 0.7rem 1.5rem; position: relative; z-index: 3001;">
+    <div style="display: flex; align-items: center; flex-direction: row;">
+      {% if session['user'] %}
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Open menu" style="background: none; border: none; box-shadow: none; outline: none; margin-right: 1.2rem;">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
+      {% endif %}
+      <a href="{{ url_for('dashboard') if session.get('user') else url_for('index') }}" class="logo" style="color: #fff; font-size: 1.5rem; font-weight: 600; text-decoration: none;">Data Works Employee Portal</a>
+    </div>
     {% if session['user'] %}
-      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Open menu">
-        <span></span><span></span><span></span>
-      </button>
       <nav class="topnav">
         <a href="{{ url_for('dashboard') }}">Dashboard</a>
         <a href="{{ url_for('log_hours') }}">Log Hours</a>
@@ -21,7 +27,6 @@
         <a href="{{ url_for('logout') }}">Logout</a>
       </nav>
       <aside id="sidebar" class="sidebar">
-        <button class="close-btn" id="closeSidebar" aria-label="Close menu">&times;</button>
         <a href="{{ url_for('dashboard') }}">Dashboard</a>
         <a href="{{ url_for('log_hours') }}">Log Hours</a>
         <a href="{{ url_for('view_hours') }}">View Hours</a>
@@ -33,30 +38,17 @@
     document.addEventListener('DOMContentLoaded', function() {
       var sidebar = document.getElementById('sidebar');
       var toggle = document.getElementById('sidebarToggle');
-      var closeBtn = document.getElementById('closeSidebar');
       if (toggle && sidebar) {
         toggle.onclick = function() {
           sidebar.classList.toggle('open');
         };
       }
-      if (closeBtn && sidebar) {
-        closeBtn.onclick = function() {
-          sidebar.classList.remove('open');
-        };
-      }
     });
   </script>
   <main>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="flash-message">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
     {% block content %}{% endblock %}
   </main>
-  <footer>
+  <footer style="background: #4A90E2; color: #fff; padding: 1rem 1.5rem; text-align: center;">
     &copy; {{ 2025 }} Data Works Consulting. All rights reserved.<br>
     7472 Palm Avenue, Sebastopol, CA 95472 &bull; (707) 823-3490 &bull; <a href="mailto:info@dataworks-consulting.com" style="color:#fff;text-decoration:underline;">info@dataworks-consulting.com</a>
   </footer>

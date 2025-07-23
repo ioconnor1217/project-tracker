@@ -4,8 +4,11 @@
   <script defer src="{{ url_for('static', filename='auth.js') }}"></script>
 {% endblock %}
 {% block content %}
-  <div class="dashboard-splash">
-    <h2 class="welcome">Welcome, <span id="username">{{ session['user'] }}</span>!</h2>
-    <p>Use the navigation above to make a selection.</p>
+  <div style="display: flex; flex-direction: column; align-items: center;">
+    <img src="{{ url_for('static', filename='img/301144332_770762553993590_419798736427782321_n.gif') }}" alt="Data Works Logo" style="max-width: 220px; margin-top: 1rem; margin-bottom: 1rem;">
+    <div class="dashboard-splash" style="text-align: center;">
+      <h2 class="welcome" style="margin-bottom: 1rem;">Welcome, <span id="username">{{ session['user'] }}</span>!</h2>
+      <p style="margin-top: 0;">Use the navigation above or the sidebar to make a selection.</p>
+    </div>
   </div>
 {% endblock %}

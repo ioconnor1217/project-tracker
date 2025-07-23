@@ -4,7 +4,6 @@ import os
 sys.stdout.reconfigure(line_buffering=True)
 sys.stderr.reconfigure(line_buffering=True)
 os.environ["PYTHONUNBUFFERED"] = "1"
-print("APP.PY TOP - FULL APP", flush=True)
 
 from datetime import datetime  # Ensure datetime is always available
 try:
@@ -18,13 +17,11 @@ try:
     from client import Client
     from hours import Hours
 except Exception as e:
-    print("IMPORT ERROR:", e, flush=True)
     import sys
     sys.exit(1)
 
 
 app = Flask(__name__)
-print("APP OBJECT CREATED", flush=True)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_2")
 
 # Make session available in all templates

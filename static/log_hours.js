@@ -26,8 +26,8 @@ async function setupGrid() {
   projectOptions = await getProjects();
 
   table = new Tabulator("#hours-table", {
-    layout: "fitColumns",
-    addRowPos: "top",
+    layout: "fitDataTable",
+    addRowPos: "bottom",
     history: true,
     placeholder: "No Data Set",
     columns: [
@@ -68,43 +68,44 @@ async function setupGrid() {
         field: "hours",
         editor: "number",
         editorParams: { min: 0.01, step: 0.01 },
+        resizable: true,
         formatter: function(cell) {
           const value = cell.getValue();
           if (!value || value === 0 || value === "0" || value === "") {
             return '<span style="color:#888">0</span>';
           }
           return value;
-        },
-        bottomCalc: "sum",
-        bottomCalcFormatter: function(cell) { return "Total Daily Hours: " + cell.getValue(); }
+        }
       },
       {
         formatter: function(cell) {
-          const row = cell.getRow().getData();
-          // Only show delete button if all fields are filled
-          const hasProject = row.project !== null && row.project !== undefined && row.project !== "";
-          const hasDescription = row.description && row.description !== "Enter description..." && row.description.trim() !== "";
-          const hasHours = row.hours && !isNaN(Number(row.hours)) && Number(row.hours) > 0;
-          if (hasProject && hasDescription && hasHours) {
-            return '<span style="color:red;cursor:pointer;font-size:1.2em;">&#10006;</span>';
-          } else {
-            return '';
-          }
+          return '<span class="delete-x" style="color:red;cursor:pointer;font-size:1.2em;display:inline-block;width:100%;text-align:center;overflow:visible;">&#10006;</span>';
         },
-        width: 40,
+        width: 60,
         hozAlign: "center",
         cellClick: function (e, cell) {
           const rowData = cell.getRow().getData();
-          // Only allow delete if all fields are filled
           const hasProject = rowData.project !== null && rowData.project !== undefined && rowData.project !== "";
           const hasDescription = rowData.description && rowData.description !== "Enter description..." && rowData.description.trim() !== "";
           const hasHours = rowData.hours && !isNaN(Number(rowData.hours)) && Number(rowData.hours) > 0;
-          if (hasProject && hasDescription && hasHours) {
+          const allRows = cell.getTable().getData();
+          const isEntryRow = cell.getRow().getPosition(true) === allRows.length - 1;
+          // Only allow delete if not the entry row and not the only row left
+          if (hasProject && hasDescription && hasHours && !isEntryRow && allRows.length > 1) {
             deletedRows.push({
               project_id: typeof rowData.project === "number" ? rowData.project : (projectOptions.find(opt => opt.label === rowData.project)?.value),
               date: selectedDate.toISOString().split('T')[0]
             });
             cell.getRow().delete();
+            // After delete, if no entry row exists at the bottom, add one
+            setTimeout(() => {
+              const rows = cell.getTable().getData();
+              const lastRow = rows[rows.length - 1];
+              const isLastEntryRow = lastRow && (!lastRow.project && (!lastRow.description || lastRow.description.trim() === "") && (!lastRow.hours || Number(lastRow.hours) === 0));
+              if (!isLastEntryRow) {
+                cell.getTable().addRow({ project: null, description: "", hours: "" }, false); // false = add to bottom
+              }
+            }, 100);
           }
         }
       }
@@ -124,12 +125,33 @@ async function setupGrid() {
           cell.setValue("");
         }
       }
+      // Update summary bar immediately on edit
+      updateSummaryBar();
+      // Force a full table redraw so the X appears as soon as any field is filled
+      table.redraw(true);
     }
   });
 
   setupDateControls();
   reloadGridForSelectedDate();
   document.getElementById("save-btn").addEventListener("click", saveGridData);
+
+  // Add summary bar update on data load/change
+  table.on("dataProcessed", updateSummaryBar);
+  table.on("dataLoaded", updateSummaryBar);
+}
+
+
+function updateSummaryBar() {
+  const data = table.getData();
+  let totalHours = 0;
+  for (let i = 0; i < data.length; i++) {
+    const hours = parseFloat(data[i].hours) || 0;
+    totalHours += hours;
+  }
+  let summary = document.getElementById("log-hours-summary");
+  if (!summary) return;
+  summary.textContent = `Total Daily Hours: ${totalHours}`;
 }
 
 function reloadGridForSelectedDate() {

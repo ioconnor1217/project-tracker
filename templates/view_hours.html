@@ -7,11 +7,18 @@
   <script defer src="{{ url_for('static', filename='view_hours.js') }}"></script>
 {% endblock %}
 {% block content %}
-  <h2>View Monthly Hours</h2>
-  <div id="month-controls" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-    <button id="prev-month">←</button>
-    <input type="month" id="month-picker" style="font-size:1rem; padding:2px 6px;">
-    <button id="next-month">→</button>
+  <div id="view-hours-centerwrap" style="display: flex; flex-direction: column; align-items: center;">
+    <h2>View Monthly Hours</h2>
+    <div id="month-controls" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+      <button id="prev-month">←</button>
+      <input type="month" id="month-picker">
+      <button id="next-month">→</button>
+    </div>
+    <div id="view-hours-table"></div>
+    <div id="view-hours-summary" style="margin:18px 0 0 0; font-weight:600; font-size:1.1em; color:#4A90E2; text-align:center;">
+      <div id="monthly-hours"></div>
+      <div id="monthly-bill"></div>
+    </div>
+    <button id="export-csv" style="margin-top: 1rem;">Export to CSV</button>
   </div>
-  <div id="view-hours-table"></div>
 {% endblock %}
